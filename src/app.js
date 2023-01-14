@@ -39,7 +39,7 @@ server.post('/participants', async (req, res) => {
     }
     console.log(user)
 
-    if(!user.name) return res.status(422).send('Não foi possível fazer o cadastro!')
+    if(!user) return res.status(422).send('Não foi possível fazer o cadastro!')
     
     const userAlreadyRegistered = await db.collection('participants').findOne({name: user.name})
     
