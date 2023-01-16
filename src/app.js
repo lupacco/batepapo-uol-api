@@ -1,7 +1,7 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
-import {MongoClient} from "mongodb"
+import {MongoClient, ObjectId} from "mongodb"
 import dayjs from "dayjs"
 
 import {schemaParticipant, schemaMessage} from "./schema.js"
@@ -35,7 +35,7 @@ server.post('/status', async (req, res) => {
 
         await db.collection('participants').updateOne({name: user}, { $set: {lastStatus:Date.now()}})
 
-        return res.sendStatus(209)
+        return res.sendStatus(200)
 
     }catch(err){
         console.log(err)
@@ -136,4 +136,34 @@ server.post('/messages', async (req, res) => {
     }
 
 })
+
+function removeInactiveParticipants(){
+    const tolerance = 10000 //10 seconds
+
+    setInterval(async () => {
+        const limit = Date.now() - tolerance
+
+        try{
+            const allParticipants = await db.collection('participants').find().toarray()
+
+            allParticipants.forEach(async participant => {
+                if(participant.lastStatus < limit){
+                    await db.collection('participants').deleteOne({_id: ObjectId(participant._id)})
+
+                    await db.collection('messages').insertOne({
+                        from: participant.name,
+                        to: 'Todos',
+                        text: 'saiu na sala...',
+                        type:'status',
+                        time: dayjs(Date.now()).format('HH:mm:ss')
+                    })
+                }
+            })
+        }catch(err){
+            console.log(err)
+            return res.sendStatus(500)
+        }
+    }, tolerance)
+}
+removeInactiveParticipants()
 
