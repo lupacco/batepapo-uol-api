@@ -13,7 +13,7 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
 mongoClient.connect()
 .then(() => {
-    db = mongoClient.db('projeto13-uol')
+    db = mongoClient.db()
 })
 .catch(err => console.log(err))
 
@@ -26,13 +26,15 @@ server.listen(process.env.PORT, () => console.log(`Running on PORT: ${process.en
 
 
 server.get('/participants', async (req, res) => {
+    try{
+        let participantsPromise = await db.collection('participants').find().toArray()
+        
+        return res.send(participantsPromise)
+    } catch (err){
+        console.log(err)
+        return res.sendStatus(404)
+    }
     
-    let participantsPromise = await db.collection('participants').find().toArray().then(res => {
-        return res
-    })
-    // const test = await db.collection('participants').find().toArray()
-    // console.log(test)
-    return res.send(participantsPromise)
 })
 
 server.post('/participants', async (req, res) => {
@@ -47,18 +49,46 @@ server.post('/participants', async (req, res) => {
         }
 
         const userAlreadyRegistered = await db.collection('participants').findOne({name: participant.name})
-        
+
         
         if(userAlreadyRegistered) return res.status(409).send('Usuário já cadastrado!')      
         
         await db.collection('participants').insertOne(participant)
         
+        const participantRegister = {
+            from: participant.name,
+            to: 'Todos',
+            text: 'entra na sala...',
+            type:'status',
+            time: dayjs(Date.now()).format('HH:mm:ss')
+        }
+
+        await db.collection('messages').insertOne(participantRegister)
         
         return res.sendStatus(201)
     } catch(err){
         return res.status(422).send('Não foi possível fazer o cadastro!')
     }
 
+})
+
+server.get('/messages', async (req, res) => {
+    try{
+        let messagesPromise = await db.collection('messages').find().toArray()
+
+        const {query} = req
+
+        if(query.limit){
+            const limit = Number(query.limit)
+
+            return res.send([...messagesPromise].slice(-limit))
+        }
+
+        return res.send(messagesPromise)
+    }catch(err){
+        console.log(err)
+        return res.sendStatus(422)
+    }
 })
 
 server.post('/messages', async (req, res) => {
