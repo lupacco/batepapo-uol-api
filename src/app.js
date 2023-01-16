@@ -33,31 +33,46 @@ server.get('/participants', async (req, res) => {
 })
 
 server.post('/participants', async (req, res) => {
-    const user = {
-        name: req.body.name,
-        lastStatus: Date.now()
+    try{
+        const newParticipantName = req.body.name
+        
+        const participant = {
+            name: newParticipantName,
+            lastStatus: Date.now()
+        }
+
+
+        const userAlreadyRegistered = await db.collection('participants').findOne({name: participant.name})
+        
+        
+        if(userAlreadyRegistered) return res.status(409).send('Usuário já cadastrado!')      
+        
+        await db.collection('participants').insertOne(participant)
+        
+        
+        return res.sendStatus(201)
+    } catch(err){
+        console.log(err)
+        
+        return res.status(422).send('Não foi possível fazer o cadastro!')
+
+
+        return res.sendStatus(500)
     }
-    console.log(user)
-
-    if(!user.name) return res.status(422).send('Não foi possível fazer o cadastro!')
-    
-    const userAlreadyRegistered = await db.collection('participants').findOne({name: user.name})
-    
-    if(userAlreadyRegistered) return res.status(409).send('Usuário já cadastrado!')
-    
-
-    await db.collection('participants').insertOne(user)
-
-
-    return res.sendStatus(201)
 
 
 
 })
 
 server.post('/messages', async (req, res) => {
-    const message = req.body
+    const user = req.headers.user
+    const message = {
+        from: user
+    }
+    
+    req.body.to
     console.log(message)
+    console.log(from)
     return res.sendStatus(201)
 })
 
