@@ -22,15 +22,15 @@ server.use(express.json())
 server.listen(process.env.PORT, () => console.log(`Running on PORT: ${process.env.PORT}`))
 
 
-// server.get('/participants', async (req, res) => {
+server.get('/participants', async (req, res) => {
     
-//     let participantsPromise = await db.collection('participants').find().toArray().then(res => {
-//         return res
-//     })
-//     // const test = await db.collection('participants').find().toArray()
-//     // console.log(test)
-//     return res.send(participantsPromise)
-// })
+    let participantsPromise = await db.collection('participants').find().toArray().then(res => {
+        return res
+    })
+    // const test = await db.collection('participants').find().toArray()
+    // console.log(test)
+    return res.send(participantsPromise)
+})
 
 server.post('/participants', async (req, res) => {
     const user = {
@@ -39,7 +39,7 @@ server.post('/participants', async (req, res) => {
     }
     console.log(user)
 
-    if(!user) return res.status(422).send('Não foi possível fazer o cadastro!')
+    if(!user.name) return res.status(422).send('Não foi possível fazer o cadastro!')
     
     const userAlreadyRegistered = await db.collection('participants').findOne({name: user.name})
     
@@ -48,7 +48,6 @@ server.post('/participants', async (req, res) => {
 
     await db.collection('participants').insertOne(user)
 
-    console.log(user)
 
     return res.sendStatus(201)
 
