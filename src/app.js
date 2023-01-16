@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
 import {MongoClient} from "mongodb"
+import dayjs from "dayjs"
 
 import {schemaParticipant, schemaMessage} from "./schema.js"
 
@@ -12,7 +13,7 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
 mongoClient.connect()
 .then(() => {
-    db = mongoClient.db()
+    db = mongoClient.db('projeto13-uol')
 })
 .catch(err => console.log(err))
 
@@ -37,7 +38,7 @@ server.get('/participants', async (req, res) => {
 server.post('/participants', async (req, res) => {
     try{
         const participantValidated = await schemaParticipant.validateAsync(req.body)
-        console.log(participantValidated)
+        
         const newParticipantName = req.body.name
         
         const participant = {
@@ -62,14 +63,21 @@ server.post('/participants', async (req, res) => {
 
 server.post('/messages', async (req, res) => {
     try{
-        const user = req.headers.user
-        console.log(user)
-        const message = req.body
-        console.log(message)
+        const participantExist = await db.collection('participants').findOne({name: req.headers.user})
+
+        console.log(participantExist.name)
+        
+        if(!participantExist) return res.sendStatus(422)
+
+        const message = await schemaMessage.validateAsync(req.body)
+
+        const savedMessage = await db.collection('messages').insertOne({
+            from: participantExist.name,
+            ...message,
+            time: dayjs(Date.now()).format('HH:mm:ss')
+        })
         
         return res.sendStatus(201)
-
-
 
     }catch(err){
         console.log(err)
