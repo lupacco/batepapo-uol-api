@@ -144,7 +144,7 @@ function removeInactiveParticipants(){
         const limit = Date.now() - tolerance
 
         try{
-            const allParticipants = await db.collection('participants').find().toarray()
+            const allParticipants = await db.collection('participants').find().toArray()
 
             allParticipants.forEach(async participant => {
                 if(participant.lastStatus < limit){
