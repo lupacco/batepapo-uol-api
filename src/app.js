@@ -3,6 +3,8 @@ import cors from "cors"
 import dotenv from "dotenv"
 import {MongoClient} from "mongodb"
 
+import {schemaParticipant, schemaMessage} from "./schema.js"
+
 dotenv.config()
 
 let db;
@@ -34,13 +36,15 @@ server.get('/participants', async (req, res) => {
 
 server.post('/participants', async (req, res) => {
     try{
-        const newParticipantName = req.body.name
+        // const participantValidated = await schemaParticipant.validateAsync(req.body)
 
+        const newParticipantName = req.body.name
+        
         const participant = {
             name: newParticipantName,
             lastStatus: Date.now()
         }
-
+        console.log(participant)
 
         const userAlreadyRegistered = await db.collection('participants').findOne({name: participant.name})
         
