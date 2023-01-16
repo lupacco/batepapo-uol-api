@@ -25,6 +25,24 @@ server.use(express.json())
 server.listen(process.env.PORT, () => console.log(`Running on PORT: ${process.env.PORT}`))
 
 
+server.post('/status', async (req, res) => {
+    try{
+        const {user} = req.headers
+
+        const userIsRegistered = await db.collection('participants').findOne({name: user})
+
+        if(!userIsRegistered) return res.sendStatus(404)
+
+        await db.collection('participants').updateOne({name: user}, { $set: {lastStatus:Date.now()}})
+
+        return res.sendStatus(209)
+
+    }catch(err){
+        console.log(err)
+        return res.sendStatus(500)
+    }
+})
+
 server.get('/participants', async (req, res) => {
     try{
         let participantsPromise = await db.collection('participants').find().toArray()
@@ -74,9 +92,12 @@ server.post('/participants', async (req, res) => {
 
 server.get('/messages', async (req, res) => {
     try{
-        let messagesPromise = await db.collection('messages').find().toArray()
-
         const {query} = req
+        const {user} = req.headers
+
+
+        let messagesPromise = await db.collection('messages').find({ $or: [{ from: user }, { to: user }, { to: "Todos" }] }).toArray()
+
 
         if(query.limit){
             const limit = Number(query.limit)
@@ -84,7 +105,7 @@ server.get('/messages', async (req, res) => {
             return res.send([...messagesPromise].slice(-limit))
         }
 
-        return res.send(messagesPromise)
+        return res.send([messagesPromise].slice(-100))
     }catch(err){
         console.log(err)
         return res.sendStatus(422)
