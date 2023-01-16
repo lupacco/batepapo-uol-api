@@ -10,7 +10,7 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL)
 
 mongoClient.connect()
 .then(() => {
-    db = mongoClient.db("projeto13-uol")
+    db = mongoClient.db()
 })
 .catch(err => console.log(err))
 
@@ -35,7 +35,7 @@ server.get('/participants', async (req, res) => {
 server.post('/participants', async (req, res) => {
     try{
         const newParticipantName = req.body.name
-        
+
         const participant = {
             name: newParticipantName,
             lastStatus: Date.now()
@@ -52,15 +52,8 @@ server.post('/participants', async (req, res) => {
         
         return res.sendStatus(201)
     } catch(err){
-        console.log(err)
-        
         return res.status(422).send('Não foi possível fazer o cadastro!')
-
-
-        return res.sendStatus(500)
     }
-
-
 
 })
 
