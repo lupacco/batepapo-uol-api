@@ -36,15 +36,14 @@ server.get('/participants', async (req, res) => {
 
 server.post('/participants', async (req, res) => {
     try{
-        // const participantValidated = await schemaParticipant.validateAsync(req.body)
-
+        const participantValidated = await schemaParticipant.validateAsync(req.body)
+        console.log(participantValidated)
         const newParticipantName = req.body.name
         
         const participant = {
             name: newParticipantName,
             lastStatus: Date.now()
         }
-        console.log(participant)
 
         const userAlreadyRegistered = await db.collection('participants').findOne({name: participant.name})
         
@@ -62,14 +61,20 @@ server.post('/participants', async (req, res) => {
 })
 
 server.post('/messages', async (req, res) => {
-    const user = req.headers.user
-    const message = {
-        from: user
+    try{
+        const user = req.headers.user
+        console.log(user)
+        const message = req.body
+        console.log(message)
+        
+        return res.sendStatus(201)
+
+
+
+    }catch(err){
+        console.log(err)
+        return res.sendStatus(422)
     }
-    
-    req.body.to
-    console.log(message)
-    console.log(from)
-    return res.sendStatus(201)
+
 })
 
